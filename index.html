@@ -267,6 +267,37 @@ function renderMateriales(){let m=getMateria();if(!m)return;let q=encodeURICompo
 function renderProgreso(){let m=getMateria();if(!m)return;let html='';Object.keys(progreso).forEach(key=>{if(!key.startsWith(m.nombre))return;let notas=progreso[key];let prom=(notas.reduce((a,n)=>a+n.nota,0)/notas.length).toFixed(1);html+=`<div style="background:#fff6f0;padding:10px;border-radius:12px;margin:6px 0"><b>${key}</b> • Prom: ${prom}/10 • ${notas.length} intentos</div>`+notas.map(n=>`<div style="font-size:13px;padding:6px 10px">${n.fecha} - Nota ${n.nota}/10</div>`).join('')});setHtml('progresoCont',html||'Todavía no hiciste ningún cuestionario en esta materia.')}
 function borrarProgresoMateria(){let m=getMateria();if(!m)return;if(!confirm('¿Borrar progreso de '+m.nombre+'?'))return;Object.keys(progreso).forEach(k=>{if(k.startsWith(m.nombre))delete progreso[k]});guardarTodo();renderProgreso()}
 renderCarreraInfo();renderCounts();renderResumenAnoActual();
+// NUEVO RESUMEN CON IA LIBRE - gana porque está al final
+async function hacerResumenCompleto(){
+  let m=getMateria(); if(!m) return;
+  let seleccionadas=unidades.filter(u=>u.materiaId===m.id && unidadesMarcadasResumen.has(u.id));
+  if(!seleccionadas.length){ return alert('Marcá con ✅ al menos una unidad'); }
+  setTxt('estadoResumen','La IA gratis está entendiendo... tarda 20-40 segundos, no cierres');
+  let html='';
+  for(let u of seleccionadas){
+    setTxt('estadoResumen','La IA gratis está entendiendo '+u.nombre+'...');
+    let resumenIA = await resumirConIALibre(u);
+    u.resumen=resumenIA; u.resumenCorto=resumenIA.slice(0,300); u.tieneResumen=true;
+    html+=`<div style="background:#fff6f0;padding:14px;border-radius:14px;margin:10px 0;border:2px solid #ffdce8"><h3>✨ Resumen con IA - ${u.nombre}</h3><div class="resumenTexto" contenteditable="true" style="background:white;padding:12px;border-radius:10px;white-space:pre-line">${resumenIA}</div></div>`;
+  }
+  guardarTodo();
+  setTxt('estadoResumen','✅ Listo con IA gratis');
+  setHtml('resumenCompletoCont',html);
+  let b=document.getElementById('barraResumenGlobal'); if(b) b.style.display='block';
+  renderListaResumenCheck(); renderUnidades();
+}
+async function resumirConIALibre(u){
+  let texto=(u.texto||'').slice(0,8000);
+  let prompt='Sos profesora de CBC FADU UBA, explicás en español argentino simple. Resumí '+u.nombre+' de '+getMateria().nombre+'. Si solo te doy el índice con subtítulos, desarmá CADA subtítulo: qué es, por qué importa, ejemplo en Argentina, pregunta de parcial. Formato: RESUMEN, SUBTITULOS, DEFINICIONES, CUADRO CONCEPTUAL, ESQUEMA, DESARROLLO, EJEMPLOS, PARA RECORDAR. No repitas conceptos. Texto: '+texto;
+  try{
+    let res=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
+    let txt=await res.text();
+    if(txt.length<100) throw new Error('corto');
+    return txt;
+  }catch(e){
+    return 'La IA gratis está ocupada, probá de nuevo en 1 minuto.\n\nTexto que leyó la página:\n'+texto.slice(0,2000);
+  }
+}
 </script>
 </body>
 </html>
