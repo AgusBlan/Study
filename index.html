@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Mi Estudio - FADU UBA</title>
+<link rel="icon" href="https://cdn-icons-png.flaticon.com/512/10675/10675357.png">
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#ffc7dd">
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Arial;background:#ffeef5;color:#5a3a4a;padding-bottom:40px}
+.top{text-align:center;background:#fff6f0;border-radius:20px;padding:18px;margin:14px;box-shadow:0 6px 20px rgba(0,0,0,.08);border:3px solid #ffc7dd}
+.top h1{margin:0;font-size:26px;color:#d96a96}
+.card{background:white;border-radius:18px;padding:14px;margin:14px;box-shadow:0 4px 16px rgba(0,0,0,.06);border:2px solid #ffe3ee}
+input,select,textarea{width:100%;padding:11px;border-radius:12px;border:2px solid #ffc7dd;margin:6px 0;font-size:14px;background:white}
+button.btn{width:100%;padding:12px;border:none;border-radius:14px;font-weight:bold;cursor:pointer;background:#ff8fb8;color:white;margin-top:6px}
+button.small{width:auto;padding:8px 12px;font-size:12px}
+.pill{display:inline-block;padding:8px 14px;border-radius:20px;background:#ffe3ee;font-size:13px;font-weight:bold;margin:3px;cursor:pointer}
+.pill.sel{background:#ff8fb8;color:white}
+.anoCard{background:white;border:3px solid #ffc7dd;border-radius:18px;padding:18px;margin:14px;cursor:pointer;text-align:center}
+.anoCard b{font-size:22px;color:#d96a96}
+.materiaRow{display:flex;gap:8px;align-items:center;background:#fff6f0;padding:12px;border-radius:14px;margin:8px 0;border:2px solid #ffdce8;cursor:pointer;flex-wrap:wrap}
+.materiaRow b{flex:1;min-width:120px}
+.badge{display:inline-block;padding:5px 10px;border-radius:20px;font-weight:bold;font-size:11px}
+.badge-aprobada{background:#b8f1cc;color:#1a5a30}.badge-desaprobada{background:#ffb8b8;color:#7a1a1a}.badge-cursando{background:#a8e0ff;color:#0A2540}.badge-pendiente{background:#fff0a8;color:#6a5a00}
+.unidad{display:flex;gap:8px;align-items:center;background:#fff6f0;padding:12px;border-radius:14px;margin:8px 0;border:2px solid #ffdce8;cursor:pointer}
+.unidad.sel{border:3px solid #ff8fb8;background:white}
+.unidad b{flex:1}
+.preg{background:#fff6f0;border:2px solid #ffdce8;border-radius:14px;padding:12px;margin:10px 0}
+.opc{display:block;width:100%;text-align:left;padding:10px;margin:5px 0;border:2px solid #ffc7dd;background:white;border-radius:12px;cursor:pointer;font-size:14px}
+.opc.correcta{background:#b8f1cc;border-color:#2a7a4a}
+.opc.mala{background:#ffb8b8;border-color:#a33}
+.flash{width:100%;min-height:160px;background:#fff0a8;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;font-size:18px;font-weight:bold;cursor:pointer}
+.bar{height:12px;background:#eee;border-radius:10px;overflow:hidden}.bar>div{height:100%;background:#ff8fb8}
+.progressBig{height:16px;background:#eee;border-radius:10px;overflow:hidden;margin:8px 0}.progressBig>div{height:100%;background:#ff8fb8}
+.check{width:22px;height:22px;accent-color:#ff8fb8}
+.resumenTexto{outline:none;white-space:pre-line;line-height:1.7;font-size:14px}
+.resaltadorBtn{width:36px;height:36px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,.2);cursor:pointer}
+.audioBar{background:#fff0a8;padding:10px;border-radius:12px;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:8px 0}
+</style>
+</head>
+<body>
+<div class="top">
+<h1>🎬 Mi Estudio</h1>
+<p><b>FADU - UBA</b> • <span id="carreraTitulo">Imagen y Sonido</span></p>
+<label style="font-size:13px;font-weight:bold">¿Qué carrera cursás en FADU?</label>
+<select id="carreraSel" onchange="cambiarCarrera()" style="max-width:420px;margin:6px auto">
+<option value="Imagen y Sonido">🎬 Imagen y Sonido</option>
+<option value="Arquitectura">🏛️ Arquitectura</option>
+<option value="Diseño Gráfico">🎨 Diseño Gráfico</option>
+<option value="Diseño Industrial">🪑 Diseño Industrial</option>
+<option value="Diseño de Indumentaria">👗 Diseño de Indumentaria</option>
+<option value="Diseño Textil">🧵 Diseño Textil</option>
+<option value="Diseño de Imagen y Sonido">🎥 Diseño de Imagen y Sonido</option>
+<option value="Licenciatura en Paisajismo">🌳 Licenciatura en Paisajismo</option>
+<option value="Diseño Audiovisual">🎞️ Diseño Audiovisual</option>
+<option value="Otra carrera FADU">📚 Otra carrera FADU</option>
+</select>
+<input id="carreraCustom" placeholder="Si es Otra, escribí tu carrera acá" oninput="actualizarCarreraCustom()" style="max-width:420px;margin:0 auto;display:none">
+<p id="ruta" style="font-size:13px;font-weight:bold;color:#d96a96">¿En qué año estás?</p>
+<p id="carreraInfo" style="font-size:12px"></p>
+<div style="margin-top:8px"><button class="btn small" style="background:#ff8fb8" onclick="verTodasMaterias()">📋 Ver TODAS mis materias / Qué me falta</button></div>
+<div id="tabsTop" style="display:none"><span class="pill sel" id="pill-materias" onclick="showTabMateria('materias')">📚 Materia</span><span class="pill" id="pill-unidades" onclick="showTabMateria('unidades')">📖 Unidades</span><span class="pill" id="pill-subir" onclick="showTabMateria('subir')">✨ Resumen</span><span class="pill" id="pill-quiz" onclick="showTabMateria('quiz')">📝 Cuestionario</span><span class="pill" id="pill-flash" onclick="showTabMateria('flash')">🃏 Flashcards</span><span class="pill" id="pill-mats" onclick="showTabMateria('mats')">📚 Materiales</span><span class="pill" id="pill-prog" onclick="showTabMateria('prog')">📊 Progreso</span></div>
+</div>
+<div id="view-todas" style="display:none">
+<div class="card"><button class="btn small" style="background:#ffc7dd;color:#333" onclick="volverAnos()">◀ Volver a Años</button><h2>📋 Todas mis materias - <span id="todasCarrera"></span></h2>
+<div id="resumenGlobal"></div>
+<div style="margin:10px 0"><b>Filtrar:</b> <span class="pill sel" onclick="filtrarGlobal('Todas',this)">Todas</span><span class="pill" onclick="filtrarGlobal('Aprobada',this)">✅ Aprobadas</span><span class="pill" onclick="filtrarGlobal('Desaprobada',this)">❌ Desaprobadas</span><span class="pill" onclick="filtrarGlobal('Cursando',this)">📖 Cursando</span><span class="pill" onclick="filtrarGlobal('Pendiente',this)">⏳ Pendientes</span></div>
+<div id="listaTodas"></div>
+</div>
+</div>
+<div id="view-anos">
+<div class="card" style="background:#fff6f0"><b>📊 Mi año en curso</b><div id="resumenAnoActual"></div></div>
+<div class="anoCard" onclick="entrarAno(1)"><b>1er Año</b><p id="count-1"></p><p id="estado-1" style="font-size:12px"></p></div>
+<div class="anoCard" onclick="entrarAno(2)"><b>2do Año</b><p id="count-2"></p><p id="estado-2" style="font-size:12px"></p></div>
+<div class="anoCard" onclick="entrarAno(3)"><b>3er Año</b><p id="count-3"></p><p id="estado-3" style="font-size:12px"></p></div>
+<div class="anoCard" onclick="entrarAno(4)"><b>4to Año</b><p id="count-4"></p><p id="estado-4" style="font-size:12px"></p></div>
+<div class="anoCard" onclick="entrarAno(5)"><b>5to Año</b><p id="count-5"></p><p id="estado-5" style="font-size:12px"></p></div>
+<div class="anoCard" onclick="entrarAno(6)"><b>6to Año</b><p id="count-6"></p><p id="estado-6" style="font-size:12px"></p></div>
+<div class="anoCard" style="border-color:#e8b800;background:#fffef5" onclick="entrarAno(0)"><b>☀️ Verano</b><p id="count-0"></p><p id="estado-0" style="font-size:12px"></p></div>
+<div class="card"><b>✏️ Agregar año / ciclo</b><input id="anoCustomNombre" placeholder="Ej: CBC, Posgrado..."><button class="btn" onclick="agregarAnoCustom()">+ Agregar año / ciclo</button><div id="anosCustom"></div></div>
+</div>
+<div id="view-materiasAno" style="display:none">
+<div class="card"><button class="btn small" style="background:#ffc7dd;color:#333" onclick="volverAnos()">◀ Volver a Años</button><h2 id="tituloAno">1er Año</h2><div id="resumenAnoDetalle" style="background:#fff6f0;padding:12px;border-radius:12px;font-size:13px;line-height:1.6"></div>
+<b>➕ Agregar materia a este año</b>
+<input id="nuevaMateriaNombre" placeholder="Ej: Montaje, Morfología...">
+<select id="nuevaMateriaCuatri"><option value="1er Cuatrimestre">1er Cuatrimestre</option><option value="2do Cuatrimestre">2do Cuatrimestre</option><option value="Anual">Anual</option><option value="Verano">Verano</option><option value="Cursada intensiva">Cursada intensiva</option></select>
+<select id="nuevaMateriaEstado"><option value="Cursando">📖 Cursando</option><option value="Pendiente">⏳ Pendiente / Me falta cursar</option><option value="Aprobada">✅ Aprobada</option><option value="Desaprobada">❌ Desaprobada / Tengo que recursar</option></select>
+<input id="nuevaMateriaCatedra" placeholder="Cátedra (opcional)">
+<input id="nuevaMateriaNota" placeholder="Nota / anotación (opcional)">
+<button class="btn" onclick="agregarMateria()">+ Agregar materia</button>
+<div style="margin-top:10px"><b>Filtrar:</b> <span class="pill sel" onclick="filtrarCuatri('Todas',this)">Todas</span><span class="pill" onclick="filtrarCuatri('1er Cuatrimestre',this)">1er Cuatri</span><span class="pill" onclick="filtrarCuatri('2do Cuatrimestre',this)">2do Cuatri</span><span class="pill" onclick="filtrarCuatri('Anual',this)">Anual</span><span class="pill" onclick="filtrarCuatri('Verano',this)">Verano</span></div>
+<div style="margin-top:8px"><b>Estado:</b> <span class="pill sel" onclick="filtrarEstado('Todas',this)">Todos</span><span class="pill" onclick="filtrarEstado('Aprobada',this)">✅ Aprobadas</span><span class="pill" onclick="filtrarEstado('Desaprobada',this)">❌ Desaprobadas</span><span class="pill" onclick="filtrarEstado('Cursando',this)">📖 Cursando</span><span class="pill" onclick="filtrarEstado('Pendiente',this)">⏳ Pendientes</span></div>
+<div id="listaMateriasAno"></div>
+</div>
+</div>
+<div id="view-materia" style="display:none">
+<div id="tab-materias" class="tabMateria">
+<div class="card"><button class="btn small" style="background:#ffc7dd;color:#333" onclick="volverAMateriasAno()">◀ Volver a materias</button><h2 id="materiaTitulo">Materia</h2><p id="materiaMeta" style="font-size:13px"></p><p id="materiaCatedraTxt" style="font-size:13px"></p>
+<p><b>Estado:</b> <span id="materiaEstadoBadge" class="badge"></span></p>
+<div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0"><button class="btn small" style="background:#b8f1cc;color:#1a5a30" onclick="cambiarEstadoMateria('Aprobada')">✅ Aprobada</button><button class="btn small" style="background:#ffb8b8;color:#7a1a1a" onclick="cambiarEstadoMateria('Desaprobada')">❌ Desaprobada</button><button class="btn small" style="background:#a8e0ff;color:#0A2540" onclick="cambiarEstadoMateria('Cursando')">📖 Cursando</button><button class="btn small" style="background:#fff0a8;color:#6a5a00" onclick="cambiarEstadoMateria('Pendiente')">⏳ Pendiente</button></div>
+<b>📖 Info verídica (Wikipedia + FADU)</b><button class="btn small" onclick="buscarWikipedia()">🔍 Buscar en Wikipedia</button><div id="wikiBox" style="background:#fff6f0;padding:12px;border-radius:12px;margin-top:8px;font-size:14px;line-height:1.5">Tocá Buscar en Wikipedia para traer info real.</div>
+<button class="btn small" style="background:#ffc7dd;color:#333" onclick="editarMateria()">✏️ Editar materia</button>
+<button class="btn small" style="background:#ffb8b8;color:#7a1a1a" onclick="borrarMateriaActual()">🗑️ Borrar esta materia</button>
+<div id="editarMateriaBox" style="display:none;margin-top:10px"><input id="editMateriaNombre"><select id="editMateriaCuatri"><option>1er Cuatrimestre</option><option>2do Cuatrimestre</option><option>Anual</option><option>Verano</option><option>Cursada intensiva</option></select><select id="editMateriaEstado"><option>Cursando</option><option>Pendiente</option><option>Aprobada</option><option>Desaprobada</option></select><input id="editMateriaCatedra" placeholder="Cátedra"><button class="btn" onclick="guardarEditarMateria()">Guardar cambios</button></div>
+</div>
+<div class="card"><b>📊 Resumen de esta materia</b><div id="resumenMateria"></div></div>
+</div>
+<div id="tab-unidades" class="tabMateria" style="display:none">
+<div class="card"><b>📖 Unidades de <span id="unidadesMateriaNombre"></span></b><p style="font-size:13px">Acá subís el PDF y te crea las unidades. El resumen se hace en ✨ Resumen.</p>
+<input type="file" id="pdfInputUnidades" accept="application/pdf" onchange="leerPDF(event)">
+<p id="estadoPDFUnidades" style="font-size:13px">Todavía no subiste el PDF de esta materia.</p>
+<button class="btn" onclick="document.getElementById('pdfInputUnidades').click()">📄 Elegir PDF para crear Unidades</button>
+<div style="margin-top:10px"><b>¿Cómo están marcadas las unidades?</b><select id="modoPartir"><option value="auto">Auto - buscar Unidad / Capítulo / Tema</option><option value="unidad">Buscar "Unidad 1, Unidad 2..."</option><option value="capitulo">Buscar "Capítulo 1, Capítulo 2..."</option><option value="manual">Yo las parto a mano por títulos</option></select><div id="partirManualBox" style="display:none"><input id="titulosManuales" placeholder="Ej: Montaje clásico, Raccord, Montaje moderno (separados por coma)"><button class="btn small" style="background:#ffc7dd;color:#333" onclick="partirManual()">Partir por estos títulos</button></div></div>
+<div id="listaUnidades" style="margin-top:12px"></div>
+<button class="btn" style="background:#ffc7dd;color:#333" onclick="showTabMateria('subir')">✨ Ir a Resumen</button>
+</div>
+<div class="card" id="cardDetalleUnidad" style="display:none"><b id="detalleTitulo">Unidad</b><p>Palabras: <b id="detallePalabras"></b> • Dificultad: <span id="detalleDificultad" class="badge"></span></p><div class="bar"><div id="detalleBarra" style="width:0%"></div></div><h3>Resumen de esta unidad:</h3><p id="detalleResumen" class="resumenTexto" contenteditable="true" style="background:#fff6f0;padding:12px;border-radius:12px"></p><h3>Resumen corto:</h3><p id="detalleResumenCorto" class="resumenTexto" contenteditable="true" style="background:#fff0a8;padding:12px;border-radius:12px"></p><div class="audioBar"><b>🔊 Escuchar:</b><button class="btn small" onclick="escucharTexto('detalleResumen')">▶️ Escuchar resumen</button><button class="btn small" style="background:#ffc7dd;color:#333" onclick="pausarAudio()">⏸️ Pausa</button><button class="btn small" style="background:#ddd;color:#333" onclick="detenerAudio()">⏹️ Parar</button><select id="velocidadAudio" onchange="cambiarVelocidad()" style="width:100px"><option value="0.8">0.8x Lento</option><option value="1" selected>1x Normal</option><option value="1.25">1.25x</option><option value="1.5">1.5x Rápido</option></select></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0"><b>🖍️ Resaltador:</b><button class="resaltadorBtn" style="background:#fff59d" onclick="resaltarSeleccion('#fff59d')"></button><button class="resaltadorBtn" style="background:#ff8fb8" onclick="resaltarSeleccion('#ff8fb8')"></button><button class="resaltadorBtn" style="background:#b8f1cc" onclick="resaltarSeleccion('#b8f1cc')"></button><button class="resaltadorBtn" style="background:#a8e0ff" onclick="resaltarSeleccion('#a8e0ff')"></button><button class="btn small" style="background:#ddd;color:#333" onclick="quitarResaltado()">Borrar resaltado</button><span style="font-size:12px">Seleccioná el texto y tocá un color</span></div><h3>Conceptos clave:</h3><div id="detalleConceptos"></div><button class="btn" onclick="generarQuizPorUnidad()">✨ Cuestionario solo de esta Unidad</button><button class="btn" style="background:#ffc7dd;color:#333" onclick="generarFlashcardsUnidadActual()">🃏 Flashcards de esta Unidad</button></div>
+</div>
+<div id="tab-subir" class="tabMateria" style="display:none">
+<div class="card"><b>✨ Resumen - <span id="subirMateriaNombre"></span></b><p style="font-size:13px">Marcá con ✅ las unidades que querés resumir y tocá el botón. Te hace el resumen completo.</p>
+<div id="listaResumenCheck"></div>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" onclick="marcarTodasResumen()">✅ Marcar todas</button><button class="btn small" style="background:#ffc7dd;color:#333" onclick="desmarcarTodasResumen()">Desmarcar todas</button></div>
+<button class="btn" onclick="hacerResumenCompleto()">✨ Hacer resumen COMPLETO de las unidades marcadas</button>
+<p id="estadoResumen" style="font-size:13px"></p>
+<div id="barraResumenGlobal" style="display:none">
+<div class="audioBar"><b>🔊 Audiolibro:</b><button class="btn small" onclick="escucharResumenCompleto()">▶️ Escuchar todo el resumen</button><button class="btn small" style="background:#ffc7dd;color:#333" onclick="pausarAudio()">⏸️ Pausa</button><button class="btn small" style="background:#ddd;color:#333" onclick="detenerAudio()">⏹️ Parar</button><select id="velocidadAudio2" onchange="cambiarVelocidad2()" style="width:100px"><option value="0.8">0.8x Lento</option><option value="1" selected>1x Normal</option><option value="1.25">1.25x</option><option value="1.5">1.5x Rápido</option></select></div>
+<div style="background:#fff6f0;padding:12px;border-radius:12px;margin:8px 0"><b>🖍️ Resaltadores:</b><p style="font-size:12px;margin:4px 0">Seleccioná cualquier parte del resumen y tocá un color.</p><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="resaltadorBtn" style="background:#fff59d" onclick="resaltarSeleccion('#fff59d')"></button><span style="font-size:12px">Amarillo</span><button class="resaltadorBtn" style="background:#ff8fb8" onclick="resaltarSeleccion('#ff8fb8')"></button><span style="font-size:12px">Rosita</span><button class="resaltadorBtn" style="background:#b8f1cc" onclick="resaltarSeleccion('#b8f1cc')"></button><span style="font-size:12px">Verde</span><button class="resaltadorBtn" style="background:#a8e0ff" onclick="resaltarSeleccion('#a8e0ff')"></button><span style="font-size:12px">Celeste</span><button class="btn small" style="background:#ddd;color:#333" onclick="quitarResaltado()">Borrar resaltado</button></div></div>
+<div style="background:#fff0a8;padding:12px;border-radius:12px;margin:8px 0"><b>⬇️ Descargar resumen:</b><button class="btn" onclick="descargarResumen(false)">⬇️ Descargar SIN resaltador (limpio)</button><button class="btn" style="background:#ffc7dd;color:#333" onclick="descargarResumen(true)">⬇️ Descargar CON resaltador (con tus marcas)</button></div>
+</div>
+<div id="resumenCompletoCont"></div>
+</div>
+</div>
+<div id="tab-quiz" class="tabMateria" style="display:none"><div class="card"><b>📝 Cuestionario - <span id="quizMateria"></span></b>
+<label style="font-size:13px;font-weight:bold">Elegí la unidad desde acá mismo:</label>
+<select id="quizUnidadSel" onchange="cambiarUnidadQuiz()"></select>
+<p id="quizInfo" style="font-size:13px">Elegí una unidad y generá el cuestionario.</p>
+<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn small" onclick="generarQuizPorUnidadDesdeSelector()">✨ Cuestionario de esta unidad</button><button class="btn small" style="background:#ffc7dd;color:#333" onclick="generarQuizMixto()">Mixto de TODAS</button></div>
+<div id="quizCont"></div><div id="quizResultado"></div><button class="btn" id="btnTerminarQuiz" style="display:none" onclick="terminarQuiz()">Terminar y guardar nota</button></div></div>
+<div id="tab-flash" class="tabMateria" style="display:none"><div class="card"><b>🃏 Flashcards - <span id="flashUnidadNombre">-</span></b><label style="font-size:13px;font-weight:bold">Elegí la unidad desde acá mismo:</label><select id="flashUnidadSel" onchange="cambiarUnidadFlash()"></select><div class="flash" id="flashCard" onclick="voltearFlash()">Subí el PDF en Unidades y elegí una unidad primero</div><div style="display:flex;gap:6px;margin-top:10px"><button class="btn small" style="background:#ffc7dd;color:#333" onclick="anteriorFlash()">◀ Anterior</button><button class="btn small" onclick="siguienteFlash()">Siguiente ▶</button></div><p id="flashContador" style="text-align:center;font-size:13px"></p></div></div>
+<div id="tab-mats"
