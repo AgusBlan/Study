@@ -314,67 +314,17 @@ entrarMateria = function(id){
   let m=getMateria(); if(!m) return;
   // Arreglo el titulo de arriba
   setTxt('ruta','📚 '+nombreAnoBonito(anoActual)+' • '+m.nombre+' • '+m.cuatri+' • '+carreraActual);
-};
-// ARREGLO FLASHCARDS + CUESTIONARIO CON IA LIBRE - gana porque está al final
-let generarFlashcardsVieja = generarFlashcardsUnidad;
-generarFlashcardsUnidad = async function(u){
-  if(!u) return;
-  setTxt('flashContador','La IA está armando las flashcards...');
-  let card=document.getElementById('flashCard'); if(card) card.innerText='La IA gratis está armando tus flashcards... esperá 20 seg';
-  let texto=(u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
-  // Limpio el nombre de la unidad, saco la basura /11 1
-  let nombreLimpio=(u.nombre||'').replace(/\/\d+.*$/,'').trim();
-  let prompt='Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', armá 10 flashcards para estudiar. Devolvé SOLO un JSON, sin texto afuera, así: [{"q":"pregunta corta y clara","a":"respuesta corta en 2-3 oraciones con ejemplo en Argentina"}]. Que las preguntas sean de verdad sobre lo que dice el texto, no genericas. Si solo hay subtitulos, desarmá cada subtitulo como concepto. Texto: '+texto;
-  try{
-    let res=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
-    let txt=await res.text();
-    let inicio=txt.indexOf('['); let fin=txt.lastIndexOf(']');
-    let arr=JSON.parse(txt.slice(inicio,fin+1));
-    if(arr.length>=3){
-      flashcards=arr.slice(0,10); flashIdx=0; flashVolteada=false; actualizarFlash(); showTabMateria('flash'); return;
-    }
-    throw new Error('poco');
-  }catch(e){
-    // Si la IA está ocupada, usa la vieja para que no te quedes sin nada
-    generarFlashcardsVieja(u);
-  }
-};
 
-let generarQuizViejo = generarQuizAutomatico;
-generarQuizAutomatico = async function(texto, nombreUnidad){
-  let nombreLimpio=(nombreUnidad||'').replace(/\/\d+.*$/,'').trim();
-  let textoLimpio=(texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
-  setTxt('quizInfo','La IA gratis está armando el cuestionario entendido...');
-  let prompt='Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', armá 10 preguntas multiple choice con 4 opciones. Devolvé SOLO un JSON así: [{"q":"pregunta","opciones":["opcion A","opcion B","opcion C","opcion D"],"correcta":0}]. Que las preguntas sean de verdad sobre el contenido, con distractores que parezcan reales pero esten mal. Si solo hay subtitulos, preguntá sobre lo que significa cada subtitulo. Texto: '+textoLimpio;
-  try{
-    let res=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
-    let txt=await res.text();
-    let inicio=txt.indexOf('['); let fin=txt.lastIndexOf(']');
-    let arr=JSON.parse(txt.slice(inicio,fin+1));
-    if(arr.length>=3){
-      preguntas=arr.slice(0,10).map(p=>({q:p.q, opciones:p.opciones, correcta:p.correcta}));
-      renderQuiz(); return;
-    }
-    throw new Error('poco');
-  }catch(e){
-    generarQuizViejo(texto, nombreUnidad);
-  }
-// FLASHCARDS CON IA - v2 no se rompe y limpia /19
-if(!window.__flashIA){
-window.__flashIA = true;
+// IA INTEGRADA - CUESTIONARIO + FLASHCARDS - un solo bloque
+if(!window.__iaTotal){
+window.__iaTotal = true;
 window.generarFlashcardsVieja = generarFlashcardsUnidad;
-window.generarFlashcardsUnidad = async function(u){
-  if(!u) return;
-  // Limpio el nombre sucio tipo "/19 2" ANTES de todo
-  u.nombre = (u.nombre||'').replace(/\/\d+.*$/,'').replace(/\s+\d+\s*$/,'').trim();
-  let card = document.getElementById('flashCard');
-  if(card) card.innerText = 'La IA está armando tus flashcards... esperá 25 seg, no toques nada';
-  setTxt('flashContador','La IA está armando las flashcards...');
+window.generarQuizViejo = generarQuizAutomatico;
 
-  let texto = (u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,5000);
-  let prompt = 'Sos profesora de CBC FADU UBA, ICSE. Con este texto de '+u.nombre+', arma 10 flashcards. Devolve SOLO JSON asi: [{"q":"pregunta","a":"respuesta"}]. Preguntas de verdad sobre el texto, respuestas cortas. Texto: '+texto;
-
-  let arr = null;
+// --- Limpieza ---
+function limpiarTextoIA(t){ return (t||'').replace(/\/\d+\s*\d*/g,' ').replace(/```/g,' ').replace(/\s+/g,' ').trim(); }
+function limpiarNombreIA(n){ return (n||'').replace(/\/\d+.*$/,'').replace(/\s+\d+\s*$/,'').trim(); }
+async function pedirIA(prompt){
   let urls = [
     'https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai',
     'https://text.pollinations.ai/'+encodeURIComponent(prompt)
@@ -384,22 +334,75 @@ window.generarFlashcardsUnidad = async function(u){
       let res = await fetch(url);
       let txt = await res.text();
       txt = txt.replace(/```json/g,'').replace(/```/g,'');
-      let inicio = txt.indexOf('[');
-      let fin = txt.lastIndexOf(']');
-      if(inicio>=0 && fin>inicio){
-        arr = JSON.parse(txt.slice(inicio, fin+1));
-        if(arr.length >= 3) break;
-      }
+      let i = txt.indexOf('['); let f = txt.lastIndexOf(']');
+      if(i>=0 && f>i){ let arr = JSON.parse(txt.slice(i,f+1)); if(arr && arr.length>=3) return arr; }
     }catch(e){}
   }
-  if(arr && arr.length >= 3){
-    // Limpio tambien las respuestas de la IA
-    flashcards = arr.slice(0,10).map(x=>({q:String(x.q||'').replace(/\/\d+.*/g,''), a:String(x.a||'').replace(/\/\d+.*/g,'')}));
+  return null;
+}
+
+// --- FLASHCARDS CON IA ---
+window.generarFlashcardsUnidad = async function(u){
+  if(!u) return;
+  u.nombre = limpiarNombreIA(u.nombre);
+  let card = document.getElementById('flashCard');
+  if(card) card.innerText = 'La IA está armando tus flashcards... esperá 25 seg, no toques nada';
+  setTxt('flashContador','La IA está armando las flashcards...');
+  let texto = limpiarTextoIA(u.texto).slice(0,5000);
+  let prompt = 'Sos profesora de CBC FADU UBA, ICSE. Con este texto de '+u.nombre+', arma 10 flashcards. Devolve SOLO JSON asi: [{"q":"pregunta","a":"respuesta"}]. Preguntas de verdad sobre el texto, respuestas en 2-3 oraciones, sin numeros raros como /19. Texto: '+texto;
+  let arr = await pedirIA(prompt);
+  if(arr){
+    flashcards = arr.slice(0,10).map(x=>({q:limpiarTextoIA(x.q), a:limpiarTextoIA(x.a)}));
     flashIdx = 0; flashVolteada = false;
     actualizarFlash();
     showTabMateria('flash');
     return;
   }
+  window.generarFlashcardsVieja(u);
+};
+
+// --- CUESTIONARIO CON IA ---
+window.generarQuizAutomatico = async function(texto, nombreUnidad){
+  let nombreLimpio = limpiarNombreIA(nombreUnidad);
+  setTxt('quizInfo','La IA está armando tu cuestionario de '+nombreLimpio+'... esperá 25 seg');
+  let cont = document.getElementById('quizCont');
+  if(cont) cont.innerHTML = '<p>La IA está armando tu cuestionario... esperá 25 seg, no toques nada</p>';
+  let textoLimpio = limpiarTextoIA(texto).slice(0,5000);
+  let prompt = 'Sos profesora de CBC FADU UBA, ICSE. Con este texto de '+nombreLimpio+', arma 8 preguntas multiple choice. Devolve SOLO JSON asi: [{"q":"pregunta","opciones":["a","b","c","d"],"correcta":0}]. Correcta es el numero 0-3. Preguntas de verdad sobre el texto, sin numeros raros. Texto: '+textoLimpio;
+  let arr = await pedirIA(prompt);
+  if(!arr || arr.length<3){ window.generarQuizViejo(texto, nombreUnidad); return; }
+
+  // Render propio, no depende de la funcion vieja
+  preguntas = arr.slice(0,8).map(x=>({pregunta:limpiarTextoIA(x.q), opciones:(x.opciones||[]).slice(0,4).map(o=>limpiarTextoIA(o)), correcta:parseInt(x.correcta)||0}));
+  respuestas = {};
+  let html = preguntas.map((p,i)=>{
+    return '<div class="preg"><b>'+(i+1)+'. '+p.pregunta+'</b>'+p.opciones.map((op,j)=>{
+      return '<button class="opc" onclick="responderQuizIA('+i+','+j+',this)">'+op+'</button>';
+    }).join('')+'</div>';
+  }).join('');
+  if(cont) cont.innerHTML = html;
+  let resDiv = document.getElementById('quizResultado');
+  if(resDiv) resDiv.innerHTML = '';
+  let btn = document.getElementById('btnTerminarQuiz');
+  if(btn) btn.style.display = 'block';
+  setTxt('quizInfo','Cuestionario con IA de '+nombreLimpio+' - 8 preguntas');
+};
+
+window.responderQuizIA = function(i,j,btn){
+  respuestas[i]=j;
+  let pregDiv = btn.parentElement;
+  let botones = pregDiv.querySelectorAll('.opc');
+  botones.forEach((b,idx)=>{
+    b.style.pointerEvents='none';
+    if(idx===preguntas[i].correcta) b.classList.add('correcta');
+    else if(idx===j) b.classList.add('mala');
+  });
+  let correctas = Object.keys(respuestas).filter(k=>respuestas[k]===preguntas[k].correcta).length;
+  let total = Object.keys(respuestas).length;
+  let resDiv = document.getElementById('quizResultado');
+  if(resDiv) resDiv.innerHTML = '<p><b>Vas '+correctas+' / '+total+' bien</b></p>';
+};
+    }
 </script>
 </body>
 </html>
