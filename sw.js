@@ -1,5 +1,5 @@
 self.addEventListener('install', e=>{
-  e.waitUntil(caches.open('estudio-v3').then(c=>c.addAll(['./','./index.html','./manifest.json'])));
+  e.waitUntil(caches.open('estudio-v2').then(c=>c.addAll(['./','./index.html','./manifest.json'])));
   self.skipWaiting();
 });
 self.addEventListener('activate', e=>{
