@@ -1,14 +1,22 @@
 {
   "name": "Mi Estudio - FADU UBA",
   "short_name": "Mi Estudio",
+  "description": "Mi Estudio FADU UBA - Resumenes, audiolibro, cuestionarios, flashcards y OCR para PDFs escaneados",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffeef5",
   "theme_color": "#ffc7dd",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/10675/10675357.png",
       "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/10675/10675357.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     }
