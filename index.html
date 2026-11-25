@@ -359,36 +359,49 @@ generarQuizAutomatico = async function(texto, nombreUnidad){
   }catch(e){
     generarQuizViejo(texto, nombreUnidad);
   }
-  
-};// FLASHCARDS CON IA LIBRE - version que no rompe botones
+// FLASHCARDS CON IA - v2 no se rompe y limpia /19
 if(!window.__flashIA){
 window.__flashIA = true;
 window.generarFlashcardsVieja = generarFlashcardsUnidad;
 window.generarFlashcardsUnidad = async function(u){
   if(!u) return;
+  // Limpio el nombre sucio tipo "/19 2" ANTES de todo
+  u.nombre = (u.nombre||'').replace(/\/\d+.*$/,'').replace(/\s+\d+\s*$/,'').trim();
   let card = document.getElementById('flashCard');
-  if(card) card.innerText = 'La IA está armando tus flashcards... esperá 20 seg';
+  if(card) card.innerText = 'La IA está armando tus flashcards... esperá 25 seg, no toques nada';
   setTxt('flashContador','La IA está armando las flashcards...');
-  let texto = (u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
-  let nombreLimpio = (u.nombre||'').replace(/\/\d+.*$/,'').trim();
-  let prompt = 'Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', arma 10 flashcards para estudiar. Devolve SOLO un JSON, sin texto afuera, asi: [{"q":"pregunta corta y clara","a":"respuesta corta en 2-3 oraciones"}]. Que las preguntas sean de verdad sobre lo que dice el texto, no genericas. Texto: '+texto;
-  try{
-    let res = await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
-    let txt = await res.text();
-    let inicio = txt.indexOf('[');
-    let fin = txt.lastIndexOf(']');
-    let arr = JSON.parse(txt.slice(inicio, fin+1));
-    if(arr.length >= 3){
-      flashcards = arr.slice(0,10);
-      flashIdx = 0; flashVolteada = false;
-      actualizarFlash();
-      showTabMateria('flash');
-      return;
-    }
-    throw new Error('poco');
-  }catch(e){
-    window.generarFlashcardsVieja(u);
+
+  let texto = (u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,5000);
+  let prompt = 'Sos profesora de CBC FADU UBA, ICSE. Con este texto de '+u.nombre+', arma 10 flashcards. Devolve SOLO JSON asi: [{"q":"pregunta","a":"respuesta"}]. Preguntas de verdad sobre el texto, respuestas cortas. Texto: '+texto;
+
+  let arr = null;
+  let urls = [
+    'https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai',
+    'https://text.pollinations.ai/'+encodeURIComponent(prompt)
+  ];
+  for(let url of urls){
+    try{
+      let res = await fetch(url);
+      let txt = await res.text();
+      txt = txt.replace(/```json/g,'').replace(/```/g,'');
+      let inicio = txt.indexOf('[');
+      let fin = txt.lastIndexOf(']');
+      if(inicio>=0 && fin>inicio){
+        arr = JSON.parse(txt.slice(inicio, fin+1));
+        if(arr.length >= 3) break;
+      }
+    }catch(e){}
   }
+  if(arr && arr.length >= 3){
+    // Limpio tambien las respuestas de la IA
+    flashcards = arr.slice(0,10).map(x=>({q:String(x.q||'').replace(/\/\d+.*/g,''), a:String(x.a||'').replace(/\/\d+.*/g,'')}));
+    flashIdx = 0; flashVolteada = false;
+    actualizarFlash();
+    showTabMateria('flash');
+    return;
+  }
+  // Si la IA no anduvo, uso la vieja pero ya con el nombre limpio
+  window.generarFlashcardsVieja(u);
 };
 }
 </script>
