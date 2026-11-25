@@ -315,6 +315,51 @@ entrarMateria = function(id){
   // Arreglo el titulo de arriba
   setTxt('ruta','📚 '+nombreAnoBonito(anoActual)+' • '+m.nombre+' • '+m.cuatri+' • '+carreraActual);
 };
+// ARREGLO FLASHCARDS + CUESTIONARIO CON IA LIBRE - gana porque está al final
+let generarFlashcardsVieja = generarFlashcardsUnidad;
+generarFlashcardsUnidad = async function(u){
+  if(!u) return;
+  setTxt('flashContador','La IA está armando las flashcards...');
+  let card=document.getElementById('flashCard'); if(card) card.innerText='La IA gratis está armando tus flashcards... esperá 20 seg';
+  let texto=(u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
+  // Limpio el nombre de la unidad, saco la basura /11 1
+  let nombreLimpio=(u.nombre||'').replace(/\/\d+.*$/,'').trim();
+  let prompt='Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', armá 10 flashcards para estudiar. Devolvé SOLO un JSON, sin texto afuera, así: [{"q":"pregunta corta y clara","a":"respuesta corta en 2-3 oraciones con ejemplo en Argentina"}]. Que las preguntas sean de verdad sobre lo que dice el texto, no genericas. Si solo hay subtitulos, desarmá cada subtitulo como concepto. Texto: '+texto;
+  try{
+    let res=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
+    let txt=await res.text();
+    let inicio=txt.indexOf('['); let fin=txt.lastIndexOf(']');
+    let arr=JSON.parse(txt.slice(inicio,fin+1));
+    if(arr.length>=3){
+      flashcards=arr.slice(0,10); flashIdx=0; flashVolteada=false; actualizarFlash(); showTabMateria('flash'); return;
+    }
+    throw new Error('poco');
+  }catch(e){
+    // Si la IA está ocupada, usa la vieja para que no te quedes sin nada
+    generarFlashcardsVieja(u);
+  }
+};
+
+let generarQuizViejo = generarQuizAutomatico;
+generarQuizAutomatico = async function(texto, nombreUnidad){
+  let nombreLimpio=(nombreUnidad||'').replace(/\/\d+.*$/,'').trim();
+  let textoLimpio=(texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
+  setTxt('quizInfo','La IA gratis está armando el cuestionario entendido...');
+  let prompt='Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', armá 10 preguntas multiple choice con 4 opciones. Devolvé SOLO un JSON así: [{"q":"pregunta","opciones":["opcion A","opcion B","opcion C","opcion D"],"correcta":0}]. Que las preguntas sean de verdad sobre el contenido, con distractores que parezcan reales pero esten mal. Si solo hay subtitulos, preguntá sobre lo que significa cada subtitulo. Texto: '+textoLimpio;
+  try{
+    let res=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
+    let txt=await res.text();
+    let inicio=txt.indexOf('['); let fin=txt.lastIndexOf(']');
+    let arr=JSON.parse(txt.slice(inicio,fin+1));
+    if(arr.length>=3){
+      preguntas=arr.slice(0,10).map(p=>({q:p.q, opciones:p.opciones, correcta:p.correcta}));
+      renderQuiz(); return;
+    }
+    throw new Error('poco');
+  }catch(e){
+    generarQuizViejo(texto, nombreUnidad);
+  }
+};
 </script>
 </body>
 </html>
