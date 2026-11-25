@@ -359,21 +359,19 @@ generarQuizAutomatico = async function(texto, nombreUnidad){
   }catch(e){
     generarQuizViejo(texto, nombreUnidad);
   }
-};
-// FLASHCARDS CON IA LIBRE - pegado al final, gana
-let generarFlashcardsVieja = generarFlashcardsUnidad;
-generarFlashcardsUnidad = async function(u){
+  
+};// FLASHCARDS CON IA LIBRE - version que no rompe botones
+if(!window.__flashIA){
+window.__flashIA = true;
+window.generarFlashcardsVieja = generarFlashcardsUnidad;
+window.generarFlashcardsUnidad = async function(u){
   if(!u) return;
   let card = document.getElementById('flashCard');
   if(card) card.innerText = 'La IA está armando tus flashcards... esperá 20 seg';
   setTxt('flashContador','La IA está armando las flashcards...');
-
-  // Limpio basura del OCR como /11 1 y acorto el texto
   let texto = (u.texto||'').replace(/\/\d+\s*\d*/g,' ').replace(/\s+/g,' ').slice(0,6000);
   let nombreLimpio = (u.nombre||'').replace(/\/\d+.*$/,'').trim();
-
-  let prompt = 'Sos profesora de CBC FADU UBA, ICSE Catedra Cerra. Con este texto de '+nombreLimpio+', arma 10 flashcards para estudiar. Devolve SOLO un JSON, sin texto afuera, asi: [{"q":"pregunta corta y clara","a":"respuesta corta en 2-3 oraciones"}]. Que las preguntas sean de verdad sobre lo que dice el texto, no genericas. Si solo hay subtitulos, desarma cada subtitulo como concepto. Texto: '+texto;
-
+  let prompt = 'Sos profesora de CBC FADU UBA. Con este texto de '+nombreLimpio+', arma 10 flashcards para estudiar. Devolve SOLO un JSON, sin texto afuera, asi: [{"q":"pregunta corta y clara","a":"respuesta corta en 2-3 oraciones"}]. Que las preguntas sean de verdad sobre lo que dice el texto, no genericas. Texto: '+texto;
   try{
     let res = await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt));
     let txt = await res.text();
@@ -389,10 +387,10 @@ generarFlashcardsUnidad = async function(u){
     }
     throw new Error('poco');
   }catch(e){
-    // Si la IA esta ocupada, usa la vieja para que no te quedes sin nada
-    generarFlashcardsVieja(u);
+    window.generarFlashcardsVieja(u);
   }
 };
+}
 </script>
 </body>
 </html>
