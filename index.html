@@ -298,6 +298,23 @@ async function resumirConIALibre(u){
     return 'La IA gratis está ocupada, probá de nuevo en 1 minuto.\n\nTexto que leyó la página:\n'+texto.slice(0,2000);
   }
 }
+// ARREGLO: que diga CBC y no el numero largo
+function nombreAnoBonito(ano){
+  if(ano===0) return 'Verano';
+  if(ano>10){
+    let c=anosCustom.find(x=>x.id===ano);
+    if(c) return c.nombre;
+  }
+  return ano+'° Año';
+}
+// Guardo la entrarMateria vieja y hago una nueva que usa el nombre bonito
+let entrarMateriaVieja = entrarMateria;
+entrarMateria = function(id){
+  entrarMateriaVieja(id);
+  let m=getMateria(); if(!m) return;
+  // Arreglo el titulo de arriba
+  setTxt('ruta','📚 '+nombreAnoBonito(anoActual)+' • '+m.nombre+' • '+m.cuatri+' • '+carreraActual);
+};
 </script>
 </body>
 </html>
