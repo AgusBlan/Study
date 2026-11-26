@@ -251,8 +251,79 @@ function anteriorFlash(){if(!flashcards.length)return;flashIdx=(flashIdx-1+flash
 function generarQuizPorUnidad(){let u=unidades.find(x=>x.id===unidadSelId);if(!u)return alert('Elegí una unidad');generarQuizConTexto(u.texto,u.nombre)}
 function generarQuizMixto(){let m=getMateria();if(!m)return;let f=unidades.filter(u=>u.materiaId===m.id);if(!f.length)return alert('No hay unidades');generarQuizConTexto(f.map(u=>u.texto).join(' '),'MIXTO - '+m.nombre)}
 function generarQuizConTexto(texto,nombre){generarQuizAutomatico(texto,nombre)}
-function generarQuizAutomatico(texto,nombre){let oraciones=texto.split(/[.!?]+/).map(s=>s.trim()).filter(s=>s.length>30&&s.length<200).slice(0,8);preguntas=oraciones.map(o=>({pregunta:'¿Qué dice el texto sobre: "'+o.slice(0,80)+'..."?',opciones:[o,'Otra idea del texto','No lo dice el texto','Ninguna de las anteriores'],correcta:0}));respuestas={};let cont=document.getElementById('quizCont');cont.innerHTML=preguntas.map((p,i)=>`<div class="preg"><b>${i+1}. ${p.pregunta}</b>${p.opciones.map((op,j)=>`<button class="opc" onclick="responderQuizIA(${i},${j},this)">${op}</button>`).join('')}</div>`).join('');document.getElementById('btnTerminarQuiz').style.display='block';setTxt('quizInfo','Cuestionario de '+nombre)}
-function terminarQuiz(){let m=getMateria();if(!m)return;let total=preguntas.length;let ok=Object.keys(respuestas).filter(k=>respuestas[k]===preguntas[k].correcta).length;let nota=total?Math.round(ok/total*10):0;let key=m.nombre+' - '+(unidades.find(u=>u.id===unidadSelId)?.nombre||'Mixto');if(!progreso[key])progreso[key]=[];progreso[key].push({fecha:new Date().toLocaleDateString('es-AR'),nota:nota});guardarTodo();setHtml('quizResultado',`<p><b>Nota: ${nota}/10</b> - ${ok} de ${total} bien. Guardada en Progreso.</p>`);alert('Nota guardada: '+nota+'/10')}
+function generarQuizAutomatico(texto,nombre){
+  // 1. Limpiar títulos / encabezados que no son contenido
+  let limpio = String(texto||"")
+    .split("\n")
+    .filter(linea=>{
+      let l = linea.trim();
+      if(!l) return false;
+      if(/^cap[ií]tulo/i.test(l)) return false;
+      if(/^unidad/i.test(l)) return false;
+      if(/^parte /i.test(l)) return false;
+      if(/^índice/i.test(l)) return false;
+      if(l.length < 20 && l === l.toUpperCase()) return false; // TÍTULO EN MAYÚSCULAS
+      return true;
+    }).join(" ");
+
+  // 2. Sacar oraciones con contenido de verdad
+  let oraciones = limpio.split(/[.!?]+/).map(s=>s.trim()).filter(s=>{
+    if(s.length < 40 || s.length > 220) return false;
+    if(/^cap[ií]tulo/i.test(s)) return false;
+    if(/pág\.|página \d+/i.test(s)) return false;
+    return true;
+  });
+
+  if(!oraciones.length){
+    alert("No encontré suficiente texto con contenido en esta unidad. Probá con otra unidad o subí el PDF de nuevo.");
+    return;
+  }
+
+  // 3. Mezclar y tomar hasta 8
+  oraciones = oraciones.sort(()=>Math.random()-0.5).slice(0,8);
+
+  // Palabras que NO sirven como respuesta (para no preguntar "el", "de", "que")
+  let stop = ["para","como","cuando","donde","porque","sobre","entre","hasta","desde","esto","esta","este","estos","estas","cada","todo","todos","toda","todas","ser","estar","haber","tener","hacer","poder","decir","ir","ver","dar","saber","querer","llegar","pasar","deber","poner","parecer","quedar","creer","hablar","llevar","dejar","seguir","encontrar","llamar","venir","pensar","salir","volver","tomar","conocer","vivir","sentir","tratar","mirar","contar","empezar","esperar","buscar","existir","entrar","trabajar","escribir","perder","producir","ocurrir","entender","pedir","recibir","recordar","terminar","permitir","aparecer","conseguir","comenzar","servir","sacar","necesitar","mantener","resultar","leer","caer","cambiar","presentar","crear","abrir","considerar","oir","acabar","convertir","ganar","formar","traer","partir","morir","aceptar","realizar","suponer","comprender","lograr","explicar","preguntar","tocar","reconocer","estudiar","alcanzar","nacer","dirigir","resulta","ademas","tambien","luego","despues","antes","mientras","aunque","sino","pero","pues","entonces"];
+
+  function palabraClave(oracion, usadas){
+    let palabras = oracion.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ ]/g," ").split(" ").map(p=>p.trim()).filter(p=>p.length>=5 && !stop.includes(p.toLowerCase()) && !usadas.includes(p.toLowerCase()));
+    if(!palabras.length) return null;
+    // Elegir una palabra del medio, no la primera ni la última, para que no sea obvio
+    palabras.sort((a,b)=>b.length-a.length);
+    return palabras[0];
+  }
+
+  let todasClaves = [];
+  let datos = oraciones.map(o=>{
+    let clave = palabraClave(o, []);
+    if(clave) todasClaves.push(clave);
+    return {oracion:o, clave:clave};
+  }).filter(d=>d.clave);
+
+  if(!datos.length){
+    alert("No pude armar preguntas con este texto. Probá con otra unidad.");
+    return;
+  }
+
+  preguntas = datos.map(d=>{
+    let preguntaTexto = d.oracion.replace(new RegExp("\\b"+d.clave+"\\b","i"), "_____");
+    // Distractores: otras palabras clave del mismo texto, no genéricas
+    let distractores = todasClaves.filter(c=>c.toLowerCase()!==d.clave.toLowerCase()).sort(()=>Math.random()-0.5).slice(0,3);
+    while(distractores.length<3) distractores.push(["proceso","contexto","estructura","sociedad","desarrollo","cambio"][distractores.length]);
+    let opciones = [d.clave, ...distractores].sort(()=>Math.random()-0.5);
+    return {
+      pregunta: "Completá según el texto: \""+preguntaTexto+"\"",
+      opciones: opciones,
+      correcta: opciones.indexOf(d.clave)
+    };
+  });
+
+  respuestas={};
+  let cont=document.getElementById('quizCont');
+  cont.innerHTML=preguntas.map((p,i)=>`<div class="preg"><b>${i+1}. ${p.pregunta}</b>${p.opciones.map((op,j)=>`<button class="opc" onclick="responderQuizIA(${i},${j},this)">${op}</button>`).join('')}</div>`).join('');
+  document.getElementById('btnTerminarQuiz').style.display='block';
+  setTxt('quizInfo','Cuestionario de '+nombre);
+}function terminarQuiz(){let m=getMateria();if(!m)return;let total=preguntas.length;let ok=Object.keys(respuestas).filter(k=>respuestas[k]===preguntas[k].correcta).length;let nota=total?Math.round(ok/total*10):0;let key=m.nombre+' - '+(unidades.find(u=>u.id===unidadSelId)?.nombre||'Mixto');if(!progreso[key])progreso[key]=[];progreso[key].push({fecha:new Date().toLocaleDateString('es-AR'),nota:nota});guardarTodo();setHtml('quizResultado',`<p><b>Nota: ${nota}/10</b> - ${ok} de ${total} bien. Guardada en Progreso.</p>`);alert('Nota guardada: '+nota+'/10')}
 function renderMateriales(){let m=getMateria();if(!m)return;setHtml('listaMateriales','<p>Usá Wikipedia arriba para traer info verídica de '+m.nombre+'.</p>');setHtml('linksOficiales',`<a href="https://www.fadu.uba.ar/" target="_blank">FADU UBA ➜</a><br><a href="https://es.wikipedia.org/wiki/${encodeURIComponent(m.nombre)}" target="_blank">Wikipedia: ${m.nombre} ➜</a>`)}
 function renderProgreso(){let m=getMateria();if(!m)return;let html='';Object.keys(progreso).forEach(k=>{if(k.startsWith(m.nombre)){let notas=progreso[k];html+=`<div style="background:#fff6f0;padding:10px;border-radius:12px;margin:6px 0"><b>${k}</b> • Prom: ${(notas.reduce((a,n)=>a+n.nota,0)/notas.length).toFixed(1)}/10 • ${notas.length} intentos</div>`}});setHtml('progresoCont',html||'Todavía no hiciste ningún cuestionario.')}
 function borrarProgresoMateria(){let m=getMateria();if(!m)return;if(!confirm('¿Borrar progreso de '+m.nombre+'?'))return;Object.keys(progreso).forEach(k=>{if(k.startsWith(m.nombre))delete progreso[k]});guardarTodo();renderProgreso()}
