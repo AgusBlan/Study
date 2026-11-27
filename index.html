@@ -215,7 +215,7 @@ async function pedirIA(prompt){
   let KEY=getGeminiKey();
   if(!KEY){ alert('Primero pegá tu clave gratis de Gemini arriba en el cartel amarillo.'); return null; }
   try{
-    let res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+KEY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:String(prompt||'') }]}]})});
+    let res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key="+KEY,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({contents:[{parts:[{text:String(prompt||'') }]}]})});
     let data=await res.json();
     if(data.error){ alert('Error Gemini: '+data.error.message); console.log(data.error); return null; }
     let txt=data.candidates?.[0]?.content?.parts?.[0]?.text||"";
